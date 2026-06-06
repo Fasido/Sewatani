@@ -1,0 +1,17 @@
+.dart_tool/
+build/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+android/local.properties
+ios/Pods/
+
+.env
+*.env
+
+.vscode/
+
+Thumbs.db
+Desktop.ini
