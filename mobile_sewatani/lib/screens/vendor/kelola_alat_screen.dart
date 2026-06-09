@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
-import '../../models/alat_preview.dart';
+import '../../providers/alat_provider.dart';
 import '../../widgets/alat_preview_card.dart';
 
-class KelolaAlatScreen extends StatelessWidget {
+class KelolaAlatScreen extends StatefulWidget {
   const KelolaAlatScreen({super.key});
 
   @override
+  State<KelolaAlatScreen> createState() => _KelolaAlatScreenState();
+}
+
+class _KelolaAlatScreenState extends State<KelolaAlatScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => context.read<AlatProvider>().fetchAlat());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final alatProvider = context.watch<AlatProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kelola Alat'),
@@ -33,24 +47,30 @@ class KelolaAlatScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(22),
             ),
             child: const Text(
-              'Vendor dapat menambah, mengubah, dan menghapus data alat pertanian. Fitur CRUD akan dihubungkan ke API MySQL pada step berikutnya.',
+              'Daftar alat pada halaman ini sudah diambil dari AlatProvider. Pada step CRUD, data yang sama akan disambungkan ke API MySQL.',
               style: TextStyle(color: AppColors.primaryDark, height: 1.45, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(height: 16),
-          ...demoAlatList.map(
-            (alat) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: AlatPreviewCard(
-                alat: alat,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Kelola ${alat.name} pada step CRUD.')),
-                  );
-                },
+          if (alatProvider.isLoading)
+            const Padding(
+              padding: EdgeInsets.only(top: 24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            ...alatProvider.allItems.map(
+              (alat) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AlatPreviewCard(
+                  alat: alat,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Kelola ${alat.name} pada step CRUD.')),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

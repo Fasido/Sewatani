@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import '../petani/petani_main_screen.dart';
 import '../vendor/vendor_main_screen.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
 
-  void _openPetani(BuildContext context) {
+  Future<void> _openPetani(BuildContext context) async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.loginAsPetani();
+
+    if (!context.mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const PetaniMainScreen()),
@@ -15,7 +22,12 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  void _openVendor(BuildContext context) {
+  Future<void> _openVendor(BuildContext context) async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.loginAsVendor();
+
+    if (!context.mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const VendorMainScreen()),
@@ -25,6 +37,8 @@ class RoleSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Pilih Role')),
       body: SafeArea(
@@ -43,7 +57,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Role menentukan tampilan dan fitur utama yang bisa digunakan di aplikasi SewaTani.',
+                'Role akan disimpan di SharedPreferences supaya aplikasi bisa langsung membuka halaman sesuai role saat dibuka kembali.',
                 style: TextStyle(
                   color: AppColors.textGrey,
                   fontSize: 15,
@@ -54,18 +68,18 @@ class RoleSelectionScreen extends StatelessWidget {
               _RoleCard(
                 icon: Icons.person_outline,
                 title: 'Petani / Penyewa',
-                description:
-                    'Cari alat pertanian, lihat detail harga, dan buat booking sewa alat.',
+                description: 'Cari alat pertanian, lihat detail harga, dan buat booking sewa alat.',
                 buttonText: 'Masuk sebagai Petani',
+                isLoading: isLoading,
                 onTap: () => _openPetani(context),
               ),
               const SizedBox(height: 16),
               _RoleCard(
                 icon: Icons.storefront_outlined,
                 title: 'Vendor / Pemilik Alat',
-                description:
-                    'Kelola data alat pertanian dan pantau pesanan dari petani.',
+                description: 'Kelola data alat pertanian dan pantau pesanan dari petani.',
                 buttonText: 'Masuk sebagai Vendor',
+                isLoading: isLoading,
                 onTap: () => _openVendor(context),
               ),
             ],
@@ -81,6 +95,7 @@ class _RoleCard extends StatelessWidget {
   final String title;
   final String description;
   final String buttonText;
+  final bool isLoading;
   final VoidCallback onTap;
 
   const _RoleCard({
@@ -88,6 +103,7 @@ class _RoleCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.buttonText,
+    required this.isLoading,
     required this.onTap,
   });
 
@@ -120,17 +136,23 @@ class _RoleCard extends StatelessWidget {
             const SizedBox(height: 7),
             Text(
               description,
-              style: const TextStyle(
-                color: AppColors.textGrey,
-                height: 1.45,
-              ),
+              style: const TextStyle(color: AppColors.textGrey, height: 1.45),
             ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: onTap,
-                child: Text(buttonText),
+                onPressed: isLoading ? null : onTap,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.2,
+                        ),
+                      )
+                    : Text(buttonText),
               ),
             ),
           ],

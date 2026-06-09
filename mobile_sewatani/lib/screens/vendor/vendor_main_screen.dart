@@ -4,6 +4,7 @@ import '../../widgets/app_bottom_nav.dart';
 import 'dashboard_vendor_screen.dart';
 import 'kelola_alat_screen.dart';
 import 'pesanan_vendor_screen.dart';
+import 'profil_vendor_screen.dart';
 
 class VendorMainScreen extends StatefulWidget {
   const VendorMainScreen({super.key});
@@ -19,6 +20,7 @@ class _VendorMainScreenState extends State<VendorMainScreen> {
     DashboardVendorScreen(),
     KelolaAlatScreen(),
     PesananVendorScreen(),
+    ProfilVendorScreen(),
   ];
 
   @override
@@ -43,6 +45,11 @@ class _VendorMainScreenState extends State<VendorMainScreen> {
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
             label: 'Pesanan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.storefront_outlined),
+            selectedIcon: Icon(Icons.storefront),
+            label: 'Profil',
           ),
         ],
       ),

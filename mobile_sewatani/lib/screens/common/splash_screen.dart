@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
+import '../petani/petani_main_screen.dart';
+import '../vendor/vendor_main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,13 +18,31 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1800), () {
-      if (!mounted) return;
+    _checkSessionAndRoute();
+  }
+
+  Future<void> _checkSessionAndRoute() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.checkSession();
+
+    if (!mounted) return;
+
+    if (!authProvider.isLoggedIn) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
-    });
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => authProvider.isVendor
+            ? const VendorMainScreen()
+            : const PetaniMainScreen(),
+      ),
+    );
   }
 
   @override
@@ -81,6 +103,15 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 32),
               const CircularProgressIndicator(color: AppColors.primary),
+              const SizedBox(height: 12),
+              const Text(
+                'Mengecek sesi login...',
+                style: TextStyle(
+                  color: AppColors.textGrey,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
               Container(
                 width: double.infinity,

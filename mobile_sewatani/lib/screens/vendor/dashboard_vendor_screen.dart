@@ -1,66 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../providers/alat_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/booking_provider.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/status_badge.dart';
 
-class DashboardVendorScreen extends StatelessWidget {
+class DashboardVendorScreen extends StatefulWidget {
   const DashboardVendorScreen({super.key});
 
   @override
+  State<DashboardVendorScreen> createState() => _DashboardVendorScreenState();
+}
+
+class _DashboardVendorScreenState extends State<DashboardVendorScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      context.read<AlatProvider>().fetchAlat();
+      context.read<BookingProvider>().fetchBookings();
+    });
+  }
+
+  Color _statusColor(String status) {
+    if (status == 'Diterima') return AppColors.success;
+    if (status == 'Ditolak') return AppColors.danger;
+    return AppColors.warning;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    final alatProvider = context.watch<AlatProvider>();
+    final bookingProvider = context.watch<BookingProvider>();
+    final latestOrders = bookingProvider.items.take(2).toList();
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-          children: const [
+          children: [
             Text(
               'Dashboard Vendor',
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.textDark,
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Pantau alat dan pesanan sewa dari petani.',
-              style: TextStyle(color: AppColors.textGrey),
+              'Halo, ${user?.name ?? 'Vendor'} — pantau alat dan pesanan sewa dari petani.',
+              style: const TextStyle(color: AppColors.textGrey),
             ),
-            SizedBox(height: 22),
+            const SizedBox(height: 22),
             Row(
               children: [
                 Expanded(
                   child: _SummaryCard(
                     icon: Icons.agriculture,
                     title: 'Total Alat',
-                    value: '4',
+                    value: '${alatProvider.allItems.length}',
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _SummaryCard(
-                    icon: Icons.assignment,
-                    title: 'Pesanan',
-                    value: '2',
+                    icon: Icons.pending_actions,
+                    title: 'Menunggu',
+                    value: '${bookingProvider.waitingOrders}',
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 22),
-            SectionHeader(title: 'Pesanan Terbaru'),
-            SizedBox(height: 12),
-            _OrderPreviewCard(
-              name: 'Traktor Roda 2',
-              renter: 'Fasido',
-              status: 'Menunggu',
-            ),
-            SizedBox(height: 12),
-            _OrderPreviewCard(
-              name: 'Pompa Air Sawah',
-              renter: 'Petani Indramayu',
-              status: 'Menunggu',
-            ),
+            const SizedBox(height: 22),
+            const SectionHeader(title: 'Pesanan Terbaru'),
+            const SizedBox(height: 12),
+            if (bookingProvider.isLoading)
+              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+            else
+              ...latestOrders.map(
+                (order) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _OrderPreviewCard(
+                    name: order.alatName,
+                    renter: order.renterName,
+                    status: order.status,
+                    color: _statusColor(order.status),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -114,8 +146,9 @@ class _OrderPreviewCard extends StatelessWidget {
   final String name;
   final String renter;
   final String status;
+  final Color color;
 
-  const _OrderPreviewCard({required this.name, required this.renter, required this.status});
+  const _OrderPreviewCard({required this.name, required this.renter, required this.status, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +166,7 @@ class _OrderPreviewCard extends StatelessWidget {
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w900)),
         subtitle: Text('Penyewa: $renter'),
-        trailing: StatusBadge(text: status),
+        trailing: StatusBadge(text: status, color: color),
       ),
     );
   }

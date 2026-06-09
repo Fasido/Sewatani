@@ -5,8 +5,8 @@ import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 
-class ProfilPetaniScreen extends StatelessWidget {
-  const ProfilPetaniScreen({super.key});
+class ProfilVendorScreen extends StatelessWidget {
+  const ProfilVendorScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
     await context.read<AuthProvider>().logout();
@@ -26,7 +26,7 @@ class ProfilPetaniScreen extends StatelessWidget {
     final user = authProvider.user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Petani')),
+      appBar: AppBar(title: const Text('Profil Vendor')),
       body: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -34,11 +34,11 @@ class ProfilPetaniScreen extends StatelessWidget {
             const CircleAvatar(
               radius: 48,
               backgroundColor: AppColors.primarySoft,
-              child: Icon(Icons.person, color: AppColors.primary, size: 54),
+              child: Icon(Icons.storefront, color: AppColors.primary, size: 54),
             ),
             const SizedBox(height: 16),
             Text(
-              user?.name ?? 'Petani SewaTani',
+              user?.name ?? 'Vendor SewaTani',
               style: const TextStyle(
                 color: AppColors.textDark,
                 fontSize: 24,
@@ -47,13 +47,13 @@ class ProfilPetaniScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              user?.roleLabel ?? 'Petani / Penyewa',
+              user?.roleLabel ?? 'Vendor / Pemilik Alat',
               style: const TextStyle(color: AppColors.textGrey),
             ),
             const SizedBox(height: 22),
             _ProfileTile(icon: Icons.email_outlined, label: 'Email', value: user?.email ?? '-'),
             const SizedBox(height: 10),
-            const _ProfileTile(icon: Icons.location_on_outlined, label: 'Lokasi', value: 'Indramayu'),
+            const _ProfileTile(icon: Icons.location_on_outlined, label: 'Area Layanan', value: 'Indramayu'),
             const SizedBox(height: 10),
             const _ProfileTile(
               icon: Icons.verified_user_outlined,

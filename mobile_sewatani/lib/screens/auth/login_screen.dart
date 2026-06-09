@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import 'role_selection_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-  void _continueWithGoogle(BuildContext context) {
+  Future<void> _continueWithGoogle(BuildContext context) async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.prepareGoogleLoginPlaceholder();
+
+    if (!context.mounted) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
@@ -15,6 +22,8 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -88,30 +97,39 @@ class LoginScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _continueWithGoogle(context),
-                  icon: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'G',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  label: const Text('Lanjut dengan Google'),
+                  onPressed: authProvider.isLoading ? null : () => _continueWithGoogle(context),
+                  icon: authProvider.isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'G',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                  label: Text(authProvider.isLoading ? 'Menyiapkan Google...' : 'Lanjut dengan Google'),
                 ),
               ),
               const SizedBox(height: 14),
               const Center(
                 child: Text(
-                  'Google Sign-In Firebase akan diaktifkan pada tahap konfigurasi Firebase.',
+                  'Pada step ini tombol Google masih memakai Provider sebagai simulasi state. Firebase Auth asli dibuat pada step khusus.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textLight,
