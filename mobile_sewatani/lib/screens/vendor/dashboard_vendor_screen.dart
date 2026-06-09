@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../config/app_colors.dart';
 import '../../providers/alat_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
-import '../../widgets/section_header.dart';
+import '../../widgets/metric_card.dart';
 import '../../widgets/status_badge.dart';
 
 class DashboardVendorScreen extends StatefulWidget {
   const DashboardVendorScreen({super.key});
-
   @override
   State<DashboardVendorScreen> createState() => _DashboardVendorScreenState();
 }
@@ -19,155 +17,105 @@ class _DashboardVendorScreenState extends State<DashboardVendorScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      context.read<AlatProvider>().fetchAlat();
-      context.read<BookingProvider>().fetchBookings();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Color _statusColor(String status) {
-    if (status == 'Diterima') return AppColors.success;
-    if (status == 'Ditolak') return AppColors.danger;
-    return AppColors.warning;
+  Future<void> _load() async {
+    final vendorId = context.read<AuthProvider>().user?.id ?? 1;
+    await Future.wait([
+      context.read<AlatProvider>().fetchByVendor(vendorId),
+      context.read<BookingProvider>().fetchBookings(vendorId: vendorId),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().user;
+    final auth = context.watch<AuthProvider>();
     final alatProvider = context.watch<AlatProvider>();
     final bookingProvider = context.watch<BookingProvider>();
-    final latestOrders = bookingProvider.items.take(2).toList();
+    final totalAlat = alatProvider.allItems.length;
+    final tersedia = alatProvider.allItems.where((item) => item.tersedia).length;
+    final totalStok = alatProvider.allItems.fold<int>(0, (sum, item) => sum + item.stok);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-          children: [
-            Text(
-              'Dashboard Vendor',
-              style: const TextStyle(
-                color: AppColors.textDark,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Halo, ${user?.name ?? 'Vendor'} — pantau alat dan pesanan sewa dari petani.',
-              style: const TextStyle(color: AppColors.textGrey),
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryCard(
-                    icon: Icons.agriculture,
-                    title: 'Total Alat',
-                    value: '${alatProvider.allItems.length}',
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _SummaryCard(
-                    icon: Icons.pending_actions,
-                    title: 'Menunggu',
-                    value: '${bookingProvider.waitingOrders}',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            const SectionHeader(title: 'Pesanan Terbaru'),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _load,
+          child: ListView(padding: const EdgeInsets.fromLTRB(18, 18, 18, 28), children: [
+            _VendorHero(name: auth.user?.name ?? 'Vendor'),
+            const SizedBox(height: 18),
+            Row(children: [
+              Expanded(child: MetricCard(title: 'Total alat', value: '$totalAlat', icon: Icons.agriculture_rounded)),
+              const SizedBox(width: 12),
+              Expanded(child: MetricCard(title: 'Stok total', value: '$totalStok', icon: Icons.inventory_2_rounded, color: const Color(0xFF2563EB))),
+            ]),
             const SizedBox(height: 12),
-            if (bookingProvider.isLoading)
-              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+            Row(children: [
+              Expanded(child: MetricCard(title: 'Tersedia', value: '$tersedia', icon: Icons.verified_rounded)),
+              const SizedBox(width: 12),
+              Expanded(child: MetricCard(title: 'Menunggu', value: '${bookingProvider.waitingOrders}', icon: Icons.inbox_rounded, color: const Color(0xFFF59E0B))),
+            ]),
+            const SizedBox(height: 22),
+            const Text('Aktivitas Terbaru', style: TextStyle(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            if (bookingProvider.recentItems.isEmpty)
+              const _SoftCard()
             else
-              ...latestOrders.map(
-                (order) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _OrderPreviewCard(
-                    name: order.alatName,
-                    renter: order.renterName,
-                    status: order.status,
-                    color: _statusColor(order.status),
-                  ),
-                ),
-              ),
-          ],
+              ...bookingProvider.recentItems.map((booking) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(22), border: Border.all(color: const Color(0xFFE5E7EB))),
+                child: Row(children: [
+                  const CircleAvatar(backgroundColor: AppColors.primarySoft, child: Icon(Icons.receipt_long_rounded, color: AppColors.primary)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('${booking.namaAlat}\n${booking.namaPetani.isEmpty ? "Petani" : booking.namaPetani}', style: const TextStyle(color: AppColors.textDark, height: 1.35, fontWeight: FontWeight.w800))),
+                  StatusBadge(status: booking.status, compact: true),
+                ]),
+              )),
+          ]),
         ),
       ),
     );
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-
-  const _SummaryCard({required this.icon, required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primarySoft,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: AppColors.primary),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.textDark,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(title, style: const TextStyle(color: AppColors.textGrey)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OrderPreviewCard extends StatelessWidget {
+class _VendorHero extends StatelessWidget {
   final String name;
-  final String renter;
-  final String status;
-  final Color color;
-
-  const _OrderPreviewCard({required this.name, required this.renter, required this.status, required this.color});
-
+  const _VendorHero({required this.name});
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(14),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.assignment_outlined, color: AppColors.primary),
-        ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.w900)),
-        subtitle: Text('Penyewa: $renter'),
-        trailing: StatusBadge(text: status, color: color),
-      ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.22), blurRadius: 24, offset: const Offset(0, 12))]),
+      child: Row(children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Halo, $name', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          const Text('Kelola alat dan pesanan petani secara rapi.', style: TextStyle(color: Colors.white, fontSize: 25, height: 1.12, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 10),
+          const Text('Pantau stok, booking masuk, dan status penyewaan dari satu tempat.', style: TextStyle(color: Colors.white70, height: 1.4)),
+        ])),
+        const SizedBox(width: 14),
+        Container(width: 78, height: 78, decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), borderRadius: BorderRadius.circular(28)), child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 44)),
+      ]),
+    );
+  }
+}
+
+class _SoftCard extends StatelessWidget {
+  const _SoftCard();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFE5E7EB))),
+      child: const Row(children: [
+        CircleAvatar(backgroundColor: AppColors.primarySoft, child: Icon(Icons.receipt_long_rounded, color: AppColors.primary)),
+        SizedBox(width: 12),
+        Expanded(child: Text('Belum ada aktivitas\nPesanan dari petani akan muncul di dashboard ini.', style: TextStyle(color: AppColors.textGrey, height: 1.45, fontWeight: FontWeight.w600))),
+      ]),
     );
   }
 }

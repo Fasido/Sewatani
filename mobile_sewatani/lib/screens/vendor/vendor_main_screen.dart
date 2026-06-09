@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../widgets/app_bottom_nav.dart';
+import '../../config/app_colors.dart';
 import 'dashboard_vendor_screen.dart';
 import 'kelola_alat_screen.dart';
 import 'pesanan_vendor_screen.dart';
@@ -15,42 +14,29 @@ class VendorMainScreen extends StatefulWidget {
 
 class _VendorMainScreenState extends State<VendorMainScreen> {
   int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
+  final List<Widget> _screens = const [
     DashboardVendorScreen(),
-    KelolaAlatScreen(),
     PesananVendorScreen(),
+    KelolaAlatScreen(),
     ProfilVendorScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: AppBottomNav(
+      body: IndexedStack(index: _currentIndex, children: _screens),
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.agriculture),
-            selectedIcon: Icon(Icons.agriculture),
-            label: 'Alat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
-            label: 'Pesanan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront),
-            label: 'Profil',
-          ),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textGrey,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.inbox_rounded), label: 'Pesanan'),
+          BottomNavigationBarItem(icon: Icon(Icons.agriculture_rounded), label: 'Alat'),
+          BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Profil'),
         ],
       ),
     );
