@@ -1,6 +1,8 @@
 class AlatModel {
   final int id;
   final int vendorId;
+  final String namaPemilik;
+  final String alamatLengkap;
   final String namaAlat;
   final String kategori;
   final String deskripsi;
@@ -14,6 +16,8 @@ class AlatModel {
   const AlatModel({
     required this.id,
     required this.vendorId,
+    this.namaPemilik = '',
+    this.alamatLengkap = '',
     required this.namaAlat,
     required this.kategori,
     required this.deskripsi,
@@ -25,32 +29,33 @@ class AlatModel {
     this.emailVendor = '',
   });
 
-  bool get tersedia => status == 'tersedia';
+  bool get tersedia => status == 'tersedia' && stok > 0;
 
-  // ===== Alias agar cocok dengan UI lama dan UI baru =====
   int get idAlat => id;
   int get idVendor => vendorId;
-
   String get title => namaAlat;
   String get name => namaAlat;
   String get nama => namaAlat;
   String get category => kategori;
   String get description => deskripsi;
-
   int get pricePerDay => hargaPerHari;
   int get stock => stok;
-
   String get price => formattedPrice;
   String get priceLabel => formattedPrice;
   String get formattedPrice => _formatRupiah(hargaPerHari);
-
-  String get location => 'Indramayu';
+  String get location => alamatLengkap.isNotEmpty ? alamatLengkap : 'Indramayu';
+  String get ownerName =>
+      namaPemilik.isNotEmpty ? namaPemilik : 'Pemilik alat belum diisi';
   String get vendorName => namaVendor.isEmpty ? 'Vendor SewaTani' : namaVendor;
-
   String get imageAsset => _localImageAsset;
   String get imagePath => _localImageAsset;
   String get imageUrl => fotoUrl;
-  String get statusLabel => status == 'tersedia' ? 'Tersedia' : 'Tidak Tersedia';
+  String get statusLabel => tersedia ? 'Tersedia' : 'Tidak Tersedia';
+
+  bool get hasUploadedImage =>
+      fotoUrl.startsWith('uploads/') ||
+      fotoUrl.startsWith('http://') ||
+      fotoUrl.startsWith('https://');
 
   String get _localImageAsset {
     final file = fotoUrl.toLowerCase();
@@ -77,6 +82,10 @@ class AlatModel {
     return AlatModel(
       id: _toInt(json['id_alat'] ?? json['id'] ?? json['idAlat']),
       vendorId: _toInt(json['id_vendor'] ?? json['vendorId'] ?? json['idVendor']),
+      namaPemilik:
+          (json['nama_pemilik'] ?? json['namaPemilik'] ?? '').toString(),
+      alamatLengkap:
+          (json['alamat_lengkap'] ?? json['alamatLengkap'] ?? '').toString(),
       namaAlat: (json['nama_alat'] ??
               json['namaAlat'] ??
               json['title'] ??
@@ -113,12 +122,14 @@ class AlatModel {
     return {
       'id_alat': id,
       'id_vendor': vendorId,
+      'nama_pemilik': namaPemilik,
+      'alamat_lengkap': alamatLengkap,
       'nama_alat': namaAlat,
       'kategori': kategori,
       'deskripsi': deskripsi,
       'harga_per_hari': hargaPerHari,
       'stok': stok,
-      'status': status,
+      'status': stok <= 0 ? 'tidak_tersedia' : status,
       'foto_url': fotoUrl,
     };
   }
@@ -126,12 +137,14 @@ class AlatModel {
   Map<String, dynamic> toCreateJson() {
     return {
       'id_vendor': vendorId,
+      'nama_pemilik': namaPemilik,
+      'alamat_lengkap': alamatLengkap,
       'nama_alat': namaAlat,
       'kategori': kategori,
       'deskripsi': deskripsi,
       'harga_per_hari': hargaPerHari,
       'stok': stok,
-      'status': status,
+      'status': stok <= 0 ? 'tidak_tersedia' : status,
       'foto_url': fotoUrl,
     };
   }
@@ -139,6 +152,8 @@ class AlatModel {
   AlatModel copyWith({
     int? id,
     int? vendorId,
+    String? namaPemilik,
+    String? alamatLengkap,
     String? namaAlat,
     String? kategori,
     String? deskripsi,
@@ -152,6 +167,8 @@ class AlatModel {
     return AlatModel(
       id: id ?? this.id,
       vendorId: vendorId ?? this.vendorId,
+      namaPemilik: namaPemilik ?? this.namaPemilik,
+      alamatLengkap: alamatLengkap ?? this.alamatLengkap,
       namaAlat: namaAlat ?? this.namaAlat,
       kategori: kategori ?? this.kategori,
       deskripsi: deskripsi ?? this.deskripsi,

@@ -12,19 +12,17 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
   http: ^1.6.0
+  intl: ^0.20.2
 
   firebase_core: ^4.10.0
   firebase_auth: ^6.5.2
-
-  # Dikunci tepat ke 6.2.2 supaya API GoogleSignIn(), signIn(), dan accessToken cocok.
   google_sign_in: 6.2.2
-
   firebase_messaging: ^16.3.0
-  intl: ^0.20.2
+
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

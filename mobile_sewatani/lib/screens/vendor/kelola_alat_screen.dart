@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../config/app_config.dart';
 import '../../models/alat_model.dart';
 import '../../providers/alat_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -32,9 +33,7 @@ class _KelolaAlatScreenState extends State<KelolaAlatScreen> {
       MaterialPageRoute(builder: (_) => FormAlatScreen(alat: alat)),
     );
 
-    if (result == true && mounted) {
-      await _loadData();
-    }
+    if (result == true && mounted) await _loadData();
   }
 
   Future<void> _deleteAlat(AlatModel alat) async {
@@ -43,9 +42,7 @@ class _KelolaAlatScreenState extends State<KelolaAlatScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Hapus Alat?'),
-          content: Text(
-            'Data "${alat.namaAlat}" akan dihapus dari katalog. Lanjutkan?',
-          ),
+          content: Text('Data "${alat.namaAlat}" akan dihapus. Lanjutkan?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -108,10 +105,7 @@ class _KelolaAlatScreenState extends State<KelolaAlatScreen> {
         child: alatProvider.isLoading
             ? const Center(child: CircularProgressIndicator())
             : alatProvider.errorMessage != null
-                ? _ErrorState(
-                    message: alatProvider.errorMessage!,
-                    onRetry: _loadData,
-                  )
+                ? _ErrorState(message: alatProvider.errorMessage!, onRetry: _loadData)
                 : alatProvider.allItems.isEmpty
                     ? _EmptyState(onAdd: () => _openForm())
                     : ListView.builder(
@@ -161,7 +155,7 @@ class _HeaderInfo extends StatelessWidget {
           SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Kelola data alat pertanian yang akan tampil di katalog petani.',
+              'Kelola alat lengkap dengan foto, nama pemilik, dan alamat alat.',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -192,7 +186,6 @@ class _AlatManageCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
@@ -205,90 +198,169 @@ class _AlatManageCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              alat.imageAsset,
-              width: 86,
-              height: 86,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return Container(
-                  width: 86,
-                  height: 86,
-                  color: AppColors.primarySoft,
-                  child: const Icon(
-                    Icons.agriculture_rounded,
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
-                );
-              },
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: _AlatImage(alat: alat),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  alat.namaAlat,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textDark,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  alat.kategori,
-                  style: const TextStyle(
-                    color: AppColors.textGrey,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  alat.price,
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                Expanded(child: _AlatInfo(alat: alat, available: available)),
+                const SizedBox(width: 4),
+                Column(
                   children: [
-                    _Badge(label: 'Stok ${alat.stok}', color: AppColors.primary),
-                    _Badge(
-                      label: available ? 'Tersedia' : 'Tidak tersedia',
-                      color: available ? AppColors.primary : AppColors.danger,
+                    IconButton(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+                    ),
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 4),
-          Column(
-            children: [
-              IconButton(
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
-              ),
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-              ),
-            ],
-          ),
         ],
       ),
+    );
+  }
+}
+
+class _AlatImage extends StatelessWidget {
+  final AlatModel alat;
+
+  const _AlatImage({required this.alat});
+
+  @override
+  Widget build(BuildContext context) {
+    if (alat.hasUploadedImage) {
+      return Image.network(
+        AppConfig.imageUrl(alat.fotoUrl),
+        width: double.infinity,
+        height: 160,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _AssetFallback(alat: alat),
+      );
+    }
+
+    return _AssetFallback(alat: alat);
+  }
+}
+
+class _AssetFallback extends StatelessWidget {
+  final AlatModel alat;
+
+  const _AssetFallback({required this.alat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      alat.imageAsset,
+      width: double.infinity,
+      height: 160,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) {
+        return Container(
+          width: double.infinity,
+          height: 160,
+          color: AppColors.primarySoft,
+          child: const Icon(
+            Icons.agriculture_rounded,
+            color: AppColors.primary,
+            size: 54,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AlatInfo extends StatelessWidget {
+  final AlatModel alat;
+  final bool available;
+
+  const _AlatInfo({
+    required this.alat,
+    required this.available,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          alat.namaAlat,
+          style: const TextStyle(
+            color: AppColors.textDark,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          alat.kategori,
+          style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          alat.price,
+          style: const TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _InfoLine(icon: Icons.person_rounded, text: alat.ownerName),
+        const SizedBox(height: 6),
+        _InfoLine(icon: Icons.location_on_rounded, text: alat.location),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _Badge(label: 'Stok ${alat.stok}', color: AppColors.primary),
+            _Badge(
+              label: available ? 'Tersedia' : 'Tidak tersedia',
+              color: available ? AppColors.primary : AppColors.danger,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: AppColors.textGrey),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textGrey,
+              fontSize: 12.5,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -362,10 +434,7 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
