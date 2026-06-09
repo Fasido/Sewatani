@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/local_storage_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final LocalStorageService _storage = LocalStorageService();
@@ -32,6 +33,10 @@ class AuthProvider extends ChangeNotifier {
     _firebaseUser = FirebaseAuth.instance.currentUser;
     _user = await _storage.getSession();
 
+    if (_user?.firebaseUid.isNotEmpty == true) {
+      NotificationService.syncTokenToBackend(_user!.firebaseUid);
+    }
+
     _setLoading(false);
   }
 
@@ -48,6 +53,8 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _firebaseUser = credential.user;
+      await NotificationService.initialize();
+
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {
@@ -75,6 +82,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final currentUser = _firebaseUser ?? FirebaseAuth.instance.currentUser;
+      final fcmToken = await NotificationService.getToken();
 
       final tempUser = UserModel(
         id: 0,
@@ -93,6 +101,7 @@ class AuthProvider extends ChangeNotifier {
           'email': tempUser.email,
           'photo_url': tempUser.photoUrl,
           'role': tempUser.role,
+          'fcm_token': fcmToken,
         },
       );
 
@@ -109,6 +118,10 @@ class AuthProvider extends ChangeNotifier {
 
       await _storage.saveSession(syncedUser);
       _user = syncedUser;
+
+      if (syncedUser.firebaseUid.isNotEmpty) {
+        NotificationService.syncTokenToBackend(syncedUser.firebaseUid);
+      }
 
       _setLoading(false);
       return true;

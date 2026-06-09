@@ -9,12 +9,13 @@ class BookingProvider extends ChangeNotifier {
   final List<BookingModel> _bookings = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String? _lastNotificationMessage;
 
-  // Alias untuk UI lama.
   List<BookingModel> get items => List.unmodifiable(_bookings);
   List<BookingModel> get bookings => List.unmodifiable(_bookings);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get lastNotificationMessage => _lastNotificationMessage;
 
   int get waitingOrders =>
       _bookings.where((item) => item.status == 'menunggu').length;
@@ -72,6 +73,8 @@ class BookingProvider extends ChangeNotifier {
       );
 
       _bookings.insert(0, created);
+      _lastNotificationMessage =
+          'Booking ${created.namaAlat} berhasil dibuat. Vendor akan menerima pesanan.';
       _errorMessage = null;
       _setLoading(false);
       return true;
@@ -103,6 +106,7 @@ class BookingProvider extends ChangeNotifier {
         _bookings[index] = updated;
       }
 
+      _lastNotificationMessage = _notificationMessage(updated.namaAlat, status);
       _errorMessage = null;
       _setLoading(false);
       return true;
@@ -110,6 +114,19 @@ class BookingProvider extends ChangeNotifier {
       _errorMessage = e.toString();
       _setLoading(false);
       return false;
+    }
+  }
+
+  String _notificationMessage(String alatName, String status) {
+    switch (status) {
+      case 'diterima':
+        return 'Notifikasi: Booking $alatName diterima vendor.';
+      case 'ditolak':
+        return 'Notifikasi: Booking $alatName ditolak dan stok dikembalikan.';
+      case 'selesai':
+        return 'Notifikasi: Penyewaan $alatName selesai.';
+      default:
+        return 'Notifikasi: Status booking $alatName diperbarui.';
     }
   }
 

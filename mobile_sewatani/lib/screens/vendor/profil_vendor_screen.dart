@@ -2,13 +2,90 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../providers/alat_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/booking_provider.dart';
 import '../auth/login_screen.dart';
 
 class ProfilVendorScreen extends StatelessWidget {
   const ProfilVendorScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
+    final confirm = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const CircleAvatar(
+                radius: 30,
+                backgroundColor: AppColors.primarySoft,
+                child: Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Keluar dari akun vendor?',
+                style: TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Data alat tetap tersimpan di database. Kamu bisa login ulang kapan saja.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textGrey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (confirm != true || !context.mounted) return;
+
     await context.read<AuthProvider>().logout();
 
     if (!context.mounted) return;
@@ -23,52 +100,105 @@ class ProfilVendorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final alatProvider = context.watch<AlatProvider>();
+    final bookingProvider = context.watch<BookingProvider>();
     final user = authProvider.user;
 
+    final totalAlat = alatProvider.allItems.length;
+    final tersedia = alatProvider.allItems
+        .where((item) => item.status == 'tersedia' && item.stok > 0)
+        .length;
+    final pesananMenunggu = bookingProvider.waitingOrders;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Vendor')),
-      body: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
           children: [
-            const CircleAvatar(
-              radius: 48,
-              backgroundColor: AppColors.primarySoft,
-              child: Icon(Icons.storefront, color: AppColors.primary, size: 54),
+            _VendorHeader(
+              name: user?.name ?? 'Vendor SewaTani',
+              email: user?.email ?? 'Akun Google',
+              photoUrl: user?.photoUrl ?? '',
+              roleLabel: user?.roleLabel ?? 'Vendor / Pemilik Alat',
             ),
-            const SizedBox(height: 16),
-            Text(
-              user?.name ?? 'Vendor SewaTani',
-              style: const TextStyle(
-                color: AppColors.textDark,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    title: 'Alat',
+                    value: totalAlat.toString(),
+                    icon: Icons.agriculture_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Tersedia',
+                    value: tersedia.toString(),
+                    icon: Icons.verified_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Pesanan',
+                    value: pesananMenunggu.toString(),
+                    icon: Icons.inbox_rounded,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              user?.roleLabel ?? 'Vendor / Pemilik Alat',
-              style: const TextStyle(color: AppColors.textGrey),
+            const SizedBox(height: 18),
+            _SectionCard(
+              title: 'Informasi Vendor',
+              children: [
+                _InfoRow(
+                  icon: Icons.storefront_rounded,
+                  label: 'Nama Vendor',
+                  value: user?.name ?? '-',
+                ),
+                _InfoRow(
+                  icon: Icons.email_rounded,
+                  label: 'Email',
+                  value: user?.email ?? '-',
+                ),
+                _InfoRow(
+                  icon: Icons.badge_rounded,
+                  label: 'Role',
+                  value: user?.roleLabel ?? 'Vendor / Pemilik Alat',
+                ),
+                _InfoRow(
+                  icon: Icons.fingerprint_rounded,
+                  label: 'Vendor ID',
+                  value: '${user?.id ?? 0}',
+                ),
+              ],
             ),
-            const SizedBox(height: 22),
-            _ProfileTile(icon: Icons.email_outlined, label: 'Email', value: user?.email ?? '-'),
-            const SizedBox(height: 10),
-            const _ProfileTile(icon: Icons.location_on_outlined, label: 'Area Layanan', value: 'Indramayu'),
-            const SizedBox(height: 10),
-            const _ProfileTile(
-              icon: Icons.verified_user_outlined,
-              label: 'Sesi Login',
-              value: 'Tersimpan di SharedPreferences',
+            const SizedBox(height: 18),
+            _SectionCard(
+              title: 'Fitur Vendor',
+              children: const [
+                _InfoRow(
+                  icon: Icons.add_box_rounded,
+                  label: 'CRUD Alat',
+                  value: 'Tambah, edit, hapus, dan upload gambar alat',
+                ),
+                _InfoRow(
+                  icon: Icons.person_pin_circle_rounded,
+                  label: 'Detail Sewa',
+                  value: 'Mengisi nama pemilik dan alamat lengkap alat',
+                ),
+                _InfoRow(
+                  icon: Icons.inventory_2_rounded,
+                  label: 'Stok',
+                  value: 'Stok otomatis berkurang ketika alat dibooking',
+                ),
+              ],
             ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: authProvider.isLoading ? null : () => _logout(context),
-                icon: const Icon(Icons.logout),
-                label: Text(authProvider.isLoading ? 'Keluar...' : 'Logout'),
-              ),
-            ),
+            const SizedBox(height: 18),
+            _LogoutButton(onTap: () => _logout(context)),
           ],
         ),
       ),
@@ -76,21 +206,325 @@ class ProfilVendorScreen extends StatelessWidget {
   }
 }
 
-class _ProfileTile extends StatelessWidget {
+class _VendorHeader extends StatelessWidget {
+  final String name;
+  final String email;
+  final String photoUrl;
+  final String roleLabel;
+
+  const _VendorHeader({
+    required this.name,
+    required this.email,
+    required this.photoUrl,
+    required this.roleLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _Avatar(photoUrl: photoUrl, name: name),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Profil Vendor',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withOpacity(0.14)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.storefront_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    roleLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  final String photoUrl;
+  final String name;
+
+  const _Avatar({
+    required this.photoUrl,
+    required this.name,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    if (photoUrl.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          shape: BoxShape.circle,
+        ),
+        child: CircleAvatar(
+          radius: 36,
+          backgroundColor: AppColors.primarySoft,
+          backgroundImage: NetworkImage(photoUrl),
+          onBackgroundImageError: (_, __) {},
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95),
+        shape: BoxShape.circle,
+      ),
+      child: CircleAvatar(
+        radius: 36,
+        backgroundColor: AppColors.primarySoft,
+        child: Text(
+          initial,
+          style: const TextStyle(
+            color: AppColors.primary,
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 26),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textDark,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textGrey,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textDark,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  const _ProfileTile({required this.icon, required this.label, required this.value});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(value),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textGrey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textDark,
+                    height: 1.35,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _LogoutButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.danger,
+        side: const BorderSide(color: AppColors.danger),
+        padding: const EdgeInsets.symmetric(vertical: 15),
+      ),
+      icon: const Icon(Icons.logout_rounded),
+      label: const Text('Logout dari Akun'),
     );
   }
 }
