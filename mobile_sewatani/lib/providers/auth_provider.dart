@@ -1,89 +1,103 @@
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../models/user_model.dart';
+import '../services/google_auth_service.dart';
 import '../services/local_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final LocalStorageService _localStorage = LocalStorageService();
+  final LocalStorageService _storage = LocalStorageService();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   UserModel? _user;
+  User? _firebaseUser;
   bool _isLoading = false;
-  bool _isCheckingSession = true;
+  String? _errorMessage;
 
   UserModel? get user => _user;
+  User? get firebaseUser => _firebaseUser;
   bool get isLoading => _isLoading;
-  bool get isCheckingSession => _isCheckingSession;
-  bool get isLoggedIn => _user != null;
-  bool get isPetani => _user?.isPetani ?? false;
-  bool get isVendor => _user?.isVendor ?? false;
+  String? get errorMessage => _errorMessage;
+
+  bool get isLoggedIn => _user != null && (_user?.hasRole ?? false);
+  bool get hasGoogleAccount => _firebaseUser != null;
+  bool get isPetani => _user?.role == 'petani';
+  bool get isVendor => _user?.role == 'vendor';
 
   Future<void> checkSession() async {
-    _isCheckingSession = true;
-    notifyListeners();
+    _setLoading(true);
 
-    await Future.delayed(const Duration(milliseconds: 450));
-    _user = await _localStorage.getUserSession();
+    _firebaseUser = FirebaseAuth.instance.currentUser;
+    _user = await _storage.getSession();
 
-    _isCheckingSession = false;
-    notifyListeners();
+    _setLoading(false);
   }
 
-  Future<void> prepareGoogleLoginPlaceholder() async {
-    _isLoading = true;
-    notifyListeners();
+  Future<bool> signInWithGoogle() async {
+    _errorMessage = null;
+    _setLoading(true);
 
-    await Future.delayed(const Duration(milliseconds: 550));
+    try {
+      final credential = await _googleAuthService.signInWithGoogle();
 
-    _isLoading = false;
-    notifyListeners();
+      if (credential == null) {
+        _setLoading(false);
+        return false;
+      }
+
+      _firebaseUser = credential.user;
+      _setLoading(false);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = e.message ?? 'Login Google gagal.';
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _errorMessage = 'Login Google gagal: $e';
+      _setLoading(false);
+      return false;
+    }
   }
 
   Future<void> loginAsPetani() async {
-    _isLoading = true;
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 450));
-
-    _user = const UserModel(
-      uid: 'google-demo-petani-001',
-      name: 'Fasido',
-      email: 'fasido@gmail.com',
-      role: 'petani',
-    );
-
-    await _localStorage.saveUserSession(user: _user!);
-
-    _isLoading = false;
-    notifyListeners();
+    await _saveRoleSession('petani');
   }
 
   Future<void> loginAsVendor() async {
-    _isLoading = true;
-    notifyListeners();
+    await _saveRoleSession('vendor');
+  }
 
-    await Future.delayed(const Duration(milliseconds: 450));
+  Future<void> _saveRoleSession(String role) async {
+    final currentUser = _firebaseUser ?? FirebaseAuth.instance.currentUser;
 
-    _user = const UserModel(
-      uid: 'google-demo-vendor-001',
-      name: 'Vendor SewaTani',
-      email: 'vendor@sewatani.id',
-      role: 'vendor',
+    final user = UserModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      firebaseUid: currentUser?.uid ?? '',
+      name: currentUser?.displayName ?? 'Pengguna SewaTani',
+      email: currentUser?.email ?? '',
+      photoUrl: currentUser?.photoURL ?? '',
+      role: role,
     );
 
-    await _localStorage.saveUserSession(user: _user!);
-
-    _isLoading = false;
+    await _storage.saveSession(user);
+    _user = user;
     notifyListeners();
   }
 
   Future<void> logout() async {
-    _isLoading = true;
-    notifyListeners();
+    _setLoading(true);
 
-    await _localStorage.clearUserSession();
+    await _storage.clearSession();
+    await _googleAuthService.signOut();
+
     _user = null;
+    _firebaseUser = null;
 
-    _isLoading = false;
+    _setLoading(false);
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
   }
 }

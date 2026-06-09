@@ -18,12 +18,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkSessionAndRoute();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSessionAndRoute();
+    });
   }
 
   Future<void> _checkSessionAndRoute() async {
     final authProvider = context.read<AuthProvider>();
+
     await authProvider.checkSession();
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
@@ -35,103 +40,57 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => authProvider.isVendor
-            ? const VendorMainScreen()
-            : const PetaniMainScreen(),
-      ),
-    );
+    if (authProvider.isVendor) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const VendorMainScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PetaniMainScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            children: [
-              const Spacer(),
-              Container(
-                width: 138,
-                height: 138,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.10),
-                      blurRadius: 22,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(28),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.agriculture,
+                  color: AppColors.primary,
+                  size: 88,
                 ),
-                child: Image.asset(
-                  'assets/images/logo_sewatani.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.agriculture,
-                    size: 76,
+                SizedBox(height: 18),
+                Text(
+                  'SewaTani',
+                  style: TextStyle(
                     color: AppColors.primary,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ),
-              const SizedBox(height: 26),
-              const Text(
-                'SewaTani',
-                style: TextStyle(
-                  fontSize: 38,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Sewa alat pertanian lebih mudah untuk petani Indramayu.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textGrey,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              const CircularProgressIndicator(color: AppColors.primary),
-              const SizedBox(height: 12),
-              const Text(
-                'Mengecek sesi login...',
-                style: TextStyle(
-                  color: AppColors.textGrey,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: const Text(
-                  'Menghubungkan petani dengan pemilik alat pertanian secara lebih praktis dan terdata.',
+                SizedBox(height: 10),
+                Text(
+                  'Sewa alat pertanian lebih mudah untuk petani Indramayu.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.primaryDark,
-                    fontSize: 13,
-                    height: 1.4,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                    height: 1.5,
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 26),
+                CircularProgressIndicator(color: AppColors.primary),
+              ],
+            ),
           ),
         ),
       ),

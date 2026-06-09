@@ -5,9 +5,12 @@ import 'app/sewatani_app.dart';
 import 'providers/alat_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
+import 'services/firebase_bootstrap.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseBootstrap.initialize();
+
   runApp(
     MultiProvider(
       providers: [

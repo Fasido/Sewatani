@@ -10,9 +10,19 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _continueWithGoogle(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
-    await authProvider.prepareGoogleLoginPlaceholder();
+    final success = await authProvider.signInWithGoogle();
 
     if (!context.mounted) return;
+
+    if (!success) {
+      final message = authProvider.errorMessage ??
+          'Login Google dibatalkan atau gagal. Coba lagi.';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return;
+    }
 
     Navigator.push(
       context,
@@ -97,7 +107,9 @@ class LoginScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: authProvider.isLoading ? null : () => _continueWithGoogle(context),
+                  onPressed: authProvider.isLoading
+                      ? null
+                      : () => _continueWithGoogle(context),
                   icon: authProvider.isLoading
                       ? const SizedBox(
                           width: 22,
@@ -123,13 +135,17 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                  label: Text(authProvider.isLoading ? 'Menyiapkan Google...' : 'Lanjut dengan Google'),
+                  label: Text(
+                    authProvider.isLoading
+                        ? 'Membuka Google...'
+                        : 'Lanjut dengan Google',
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
               const Center(
                 child: Text(
-                  'Pada step ini tombol Google masih memakai Provider sebagai simulasi state. Firebase Auth asli dibuat pada step khusus.',
+                  'Gunakan akun Google untuk masuk, lalu pilih role Petani atau Vendor sesuai kebutuhan.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textLight,

@@ -1,0 +1,46 @@
+BASE URL:
+http://localhost:8000
+
+1. Health:
+GET http://localhost:8000/health.php
+
+2. Read alat:
+GET http://localhost:8000/alat/get_all.php
+
+3. Create alat:
+POST http://localhost:8000/alat/create.php
+Content-Type: application/json
+
+{
+  "id_vendor": 1,
+  "nama_alat": "Hand Tractor Baru",
+  "kategori": "Pengolahan Tanah",
+  "deskripsi": "Alat untuk membantu membajak sawah.",
+  "harga_per_hari": 175000,
+  "stok": 1,
+  "status": "tersedia",
+  "foto_url": "alat_traktor.png"
+}
+
+4. Update alat:
+POST http://localhost:8000/alat/update.php
+Content-Type: application/json
+
+{
+  "id_alat": 1,
+  "nama_alat": "Traktor Roda 2 Updated",
+  "kategori": "Pengolahan Tanah",
+  "deskripsi": "Traktor roda dua yang sudah diperbarui.",
+  "harga_per_hari": 160000,
+  "stok": 2,
+  "status": "tersedia",
+  "foto_url": "alat_traktor.png"
+}
+
+5. Delete alat:
+POST http://localhost:8000/alat/delete.php
+Content-Type: application/json
+
+{
+  "id_alat": 5
+}

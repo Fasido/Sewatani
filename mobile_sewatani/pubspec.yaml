@@ -13,24 +13,17 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
-  # State management
   provider: ^6.1.5+1
-
-  # Local session storage
   shared_preferences: ^2.5.5
-
-  # API request ke backend PHP/MySQL
   http: ^1.6.0
 
-  # Firebase & Google Login
   firebase_core: ^4.10.0
   firebase_auth: ^6.5.2
-  google_sign_in: ^7.2.0
 
-  # Firebase Cloud Messaging
+  # Dikunci tepat ke 6.2.2 supaya API GoogleSignIn(), signIn(), dan accessToken cocok.
+  google_sign_in: 6.2.2
+
   firebase_messaging: ^16.3.0
-
-  # Format tanggal dan rupiah
   intl: ^0.20.2
 
 dev_dependencies:

@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "269823588068",
+    "project_id": "sewatani-fasido-2403107",
+    "storage_bucket": "sewatani-fasido-2403107.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269823588068:android:8ea5e2dd5f2ebaecd6def1",
+        "android_client_info": {
+          "package_name": "com.Sewatani"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "269823588068-dsuh93bu7al9i11pkgq18o7v7bt0brhv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Sewatani",
+            "certificate_hash": "23913a9daf9de7c9207bb80eb23dacf40aa13883"
+          }
+        },
+        {
+          "client_id": "269823588068-j77el8922cg3k2gpgjl38qjhhjq9qj9m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDACztBvWD3jxsGnlS7tBeJ4qOF8qKu7D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "269823588068-j77el8922cg3k2gpgjl38qjhhjq9qj9m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "269823588068-n7ig0lrr48p0ctgdenatgdo31rgr6lqv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobileSewatani"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269823588068:android:f423367fee3d08ead6def1",
+        "android_client_info": {
+          "package_name": "com.fasido.sewatani"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "269823588068-fiqh95q5p0ckks1rg0c2iqlrbk2eih4i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fasido.sewatani",
+            "certificate_hash": "23913a9daf9de7c9207bb80eb23dacf40aa13883"
+          }
+        },
+        {
+          "client_id": "269823588068-j77el8922cg3k2gpgjl38qjhhjq9qj9m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDACztBvWD3jxsGnlS7tBeJ4qOF8qKu7D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "269823588068-j77el8922cg3k2gpgjl38qjhhjq9qj9m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "269823588068-n7ig0lrr48p0ctgdenatgdo31rgr6lqv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobileSewatani"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
