@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
-  const AppTheme._();
-
   static ThemeData get lightTheme {
-    final base = ThemeData(
+    return ThemeData(
       useMaterial3: true,
       fontFamily: 'Roboto',
       scaffoldBackgroundColor: AppColors.background,
@@ -14,33 +12,25 @@ class AppTheme {
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         secondary: AppColors.earth,
-        surface: AppColors.surface,
+        surface: AppColors.card,
       ),
-    );
-
-    return base.copyWith(
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        centerTitle: true,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.textDark,
         elevation: 0,
+        centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 19,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textDark,
         ),
       ),
-      textTheme: base.textTheme.apply(
-        bodyColor: AppColors.textDark,
-        displayColor: AppColors.textDark,
-      ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
-        elevation: 1.2,
+        color: AppColors.card,
+        elevation: 0,
         margin: EdgeInsets.zero,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -49,13 +39,13 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -63,22 +53,20 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary, width: 1.2),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: const TextStyle(color: AppColors.textLight),
-        labelStyle: const TextStyle(color: AppColors.textGrey),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.border),
@@ -91,12 +79,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
         ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textDark,
-        contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        hintStyle: const TextStyle(color: AppColors.textLight),
       ),
     );
   }
