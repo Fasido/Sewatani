@@ -1,60 +1,120 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
-import '../models/booking_preview.dart';
+import '../models/booking_model.dart';
+import '../services/api_service.dart';
 
 class BookingProvider extends ChangeNotifier {
-  final List<BookingPreview> _items = [];
+  final ApiService _apiService = ApiService();
+
+  final List<BookingModel> _bookings = [];
   bool _isLoading = false;
+  String? _errorMessage;
 
-  List<BookingPreview> get items => List.unmodifiable(_items);
+  // Alias untuk UI lama.
+  List<BookingModel> get items => List.unmodifiable(_bookings);
+  List<BookingModel> get bookings => List.unmodifiable(_bookings);
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
-  int get totalOrders => _items.length;
-  int get waitingOrders => _items.where((item) => item.status == 'Menunggu').length;
-  int get acceptedOrders => _items.where((item) => item.status == 'Diterima').length;
+  int get waitingOrders =>
+      _bookings.where((item) => item.status == 'menunggu').length;
 
-  Future<void> fetchBookings() async {
-    if (_items.isNotEmpty) return;
+  int get totalMenunggu => waitingOrders;
 
-    _isLoading = true;
-    notifyListeners();
+  int get totalDiterima =>
+      _bookings.where((item) => item.status == 'diterima').length;
 
-    await Future.delayed(const Duration(milliseconds: 600));
+  Future<void> fetchBookings({int? userId, int? vendorId}) async {
+    _setLoading(true);
 
-    _items.addAll(const [
-      BookingPreview(
-        id: 1,
-        alatName: 'Traktor Roda 2',
-        renterName: 'Fasido',
-        dateRange: '10 Jun 2026 - 11 Jun 2026',
-        address: 'Lohbener, Indramayu',
-        status: 'Menunggu',
-      ),
-      BookingPreview(
-        id: 2,
-        alatName: 'Pompa Air Sawah',
-        renterName: 'Petani Indramayu',
-        dateRange: '08 Jun 2026 - 08 Jun 2026',
-        address: 'Jatibarang, Indramayu',
-        status: 'Diterima',
-      ),
-    ]);
+    try {
+      String endpoint;
 
-    _isLoading = false;
-    notifyListeners();
+      if (vendorId != null && vendorId > 0) {
+        endpoint = 'booking/get_by_vendor.php?id_vendor=$vendorId';
+      } else {
+        endpoint = 'booking/get_by_user.php?id_user=${userId ?? 2}';
+      }
+
+      final response = await _apiService.get(endpoint);
+      final data = response['data'];
+
+      _bookings
+        ..clear()
+        ..addAll(
+          (data as List)
+              .map(
+                (item) =>
+                    BookingModel.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList(),
+        );
+
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    _setLoading(false);
   }
 
-  Future<void> updateStatus(int id, String status) async {
-    final index = _items.indexWhere((item) => item.id == id);
-    if (index == -1) return;
+  Future<bool> createBooking(BookingModel booking) async {
+    _setLoading(true);
 
-    _isLoading = true;
-    notifyListeners();
+    try {
+      final response = await _apiService.post(
+        'booking/create.php',
+        booking.toCreateJson(),
+      );
 
-    await Future.delayed(const Duration(milliseconds: 450));
+      final created = BookingModel.fromJson(
+        Map<String, dynamic>.from(response['data']),
+      );
 
-    _items[index] = _items[index].copyWith(status: status);
-    _isLoading = false;
+      _bookings.insert(0, created);
+      _errorMessage = null;
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> updateStatus(int id, String status) async {
+    _setLoading(true);
+
+    try {
+      final response = await _apiService.post(
+        'booking/update_status.php',
+        {
+          'id_booking': id,
+          'status': status,
+        },
+      );
+
+      final updated = BookingModel.fromJson(
+        Map<String, dynamic>.from(response['data']),
+      );
+
+      final index = _bookings.indexWhere((item) => item.id == updated.id);
+      if (index != -1) {
+        _bookings[index] = updated;
+      }
+
+      _errorMessage = null;
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
   }
 }

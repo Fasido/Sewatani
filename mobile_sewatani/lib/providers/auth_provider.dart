@@ -2,12 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/user_model.dart';
+import '../services/api_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/local_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final LocalStorageService _storage = LocalStorageService();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final ApiService _apiService = ApiService();
 
   UserModel? _user;
   User? _firebaseUser;
@@ -59,29 +61,62 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loginAsPetani() async {
-    await _saveRoleSession('petani');
+  Future<bool> loginAsPetani() async {
+    return _saveRoleSession('petani');
   }
 
-  Future<void> loginAsVendor() async {
-    await _saveRoleSession('vendor');
+  Future<bool> loginAsVendor() async {
+    return _saveRoleSession('vendor');
   }
 
-  Future<void> _saveRoleSession(String role) async {
-    final currentUser = _firebaseUser ?? FirebaseAuth.instance.currentUser;
+  Future<bool> _saveRoleSession(String role) async {
+    _errorMessage = null;
+    _setLoading(true);
 
-    final user = UserModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      firebaseUid: currentUser?.uid ?? '',
-      name: currentUser?.displayName ?? 'Pengguna SewaTani',
-      email: currentUser?.email ?? '',
-      photoUrl: currentUser?.photoURL ?? '',
-      role: role,
-    );
+    try {
+      final currentUser = _firebaseUser ?? FirebaseAuth.instance.currentUser;
 
-    await _storage.saveSession(user);
-    _user = user;
-    notifyListeners();
+      final tempUser = UserModel(
+        id: 0,
+        firebaseUid: currentUser?.uid ?? '',
+        name: currentUser?.displayName ?? 'Pengguna SewaTani',
+        email: currentUser?.email ?? '',
+        photoUrl: currentUser?.photoURL ?? '',
+        role: role,
+      );
+
+      final response = await _apiService.post(
+        'auth/sync_user.php',
+        {
+          'firebase_uid': tempUser.firebaseUid,
+          'nama': tempUser.name,
+          'email': tempUser.email,
+          'photo_url': tempUser.photoUrl,
+          'role': tempUser.role,
+        },
+      );
+
+      final data = Map<String, dynamic>.from(response['data']);
+
+      final syncedUser = UserModel(
+        id: _toInt(data['id_user']),
+        firebaseUid: data['firebase_uid']?.toString() ?? tempUser.firebaseUid,
+        name: data['nama']?.toString() ?? tempUser.name,
+        email: data['email']?.toString() ?? tempUser.email,
+        photoUrl: data['photo_url']?.toString() ?? tempUser.photoUrl,
+        role: data['role']?.toString() ?? tempUser.role,
+      );
+
+      await _storage.saveSession(syncedUser);
+      _user = syncedUser;
+
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _setLoading(false);
+      return false;
+    }
   }
 
   Future<void> logout() async {
@@ -99,5 +134,11 @@ class AuthProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    return int.tryParse(value.toString()) ?? 0;
   }
 }
